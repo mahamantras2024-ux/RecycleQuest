@@ -179,6 +179,18 @@ const streak=()=>(S.last===today()||S.last===yest())?S.streak:0;
 function modal(h){const b=$('#mbody'),st=b.scrollTop;b.innerHTML=h;b.scrollTop=st;$('#modal').classList.add('show')}
 /* ---------- views ---------- */
 const tot=()=>Object.values(S.items).reduce((a,b)=>a+b,0);
+/* Pulau Semakau: rough weight per item (grams). Estimates, not measurements. */
+const SEMW={bottle:25,cardboard:200,can:20,takeaway:30,carton:30};
+const semG=()=>Object.entries(S.items).reduce((a,[k,n])=>a+(SEMW[k]||0)*n,0);
+const fmtW=g=>g<1000?Math.round(g)+' g':(g/1000).toFixed(g<10000?2:1)+' kg';
+function semCard(){
+const g=semG(),ms=[500,1000,2500,5000,10000,25000,50000],nxm=ms.find(m=>m>g)||0,prev=ms.filter(m=>m<=g).pop()||0,mp=nxm?Math.round((g-prev)/(nxm-prev)*100):100,days=(g/360).toFixed(1);
+const nm={bottle:'🧴 Bottles',cardboard:'📦 Cardboard',can:'🥫 Cans',takeaway:'🥡 Takeaway',carton:'🥛 Cartons'};
+return `<div class="card"><h3>🏝️ Pulau Semakau landfill saved</h3>
+<p class="note">Semakau is Singapore’s only landfill and is projected to fill up around 2035. Every item you recycle correctly keeps a little more waste out of the disposal stream that ends there.</p>
+<div class="chips"><div class="chip"><b>${fmtW(g)}</b><span>Waste kept out of the bin</span></div><div class="chip"><b>${days}</b><span>Days of an average person’s landfill waste</span></div></div>
+<p class="note" style="margin-top:10px">${nxm?`Next milestone: <b>${fmtW(nxm)}</b> (${fmtW(nxm-g)} to go)`:'Top milestone reached. Amazing!'}</p><div class="bar"><i style="width:${mp}%"></i></div>
+<div style="margin-top:10px">${Object.keys(nm).map(k=>`<div class="row"><span>${nm[k]} <small class="note">· ${S.items[k]||0} × ~${SEMW[k]} g</small></span><b>${fmtW((S.items[k]||0)*SEMW[k])}</b></div>`).join('')}</div></div>`}
 const done=()=>DAILY().filter(m=>(S.mp[m.id]||0)>=m.n).length;
 const V={
 home(){const l=lvOf(S.xp);
@@ -199,6 +211,7 @@ const nm={bottle:'🧴 Bottles',cardboard:'📦 Cardboard',can:'🥫 Cans',takea
 return `<h2>Your impact</h2><div class="chips"><div class="chip"><b>${t}</b><span>Recycling actions</span></div><div class="chip"><b>${done()}</b><span>Missions today</span></div><div class="chip"><b>${S.days+1}</b><span>Days played</span></div></div>
 <div class="card"><h3>Community progress</h3><p>Your neighbourhood is at <b>Level ${l}: ${LV[l-1].n}</b>.</p><div class="bar"><i style="width:${pc}%"></i></div>
 <p class="note">${LV.map((v,i)=>`${l>i?'✅':'⬜'} ${v.n} (${v.x} XP)`).join('<br>')}</p></div>
+${semCard()}
 `},
 squad(){return teamCard()+leaderboard()}
 };
