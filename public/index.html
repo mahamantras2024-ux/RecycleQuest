@@ -12,7 +12,7 @@
 <link rel="icon" href="/icons/icon-192.png">
 <script src="/config.js?v=4"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
-<script src="/runtime.js?v=4"></script>
+<script src="/runtime.js?v=5"></script>
 
 <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
@@ -257,12 +257,15 @@ document.addEventListener('click',e=>{const t=e.target.closest('[data-a="addcm"]
 if(t.dataset.a==='addcm')addCustom();else{S.cm=(S.cm||[]).filter(m=>m.id!==t.dataset.id);save();render()}});
 document.addEventListener('keydown',e=>{if(e.key==='Enter'&&e.target.id==='cmT')addCustom()});
 let AI=null,DB=null,ME=null,LIVE=[];
-async function initBackend(){
+let SQU=null,TSU=null;
+function disconnect(){try{if(SQU)SQU()}catch(e){}try{if(TSU)TSU()}catch(e){}SQU=TSU=null;DB=null;ME=null;LIVE=[];TS=[]}
+async function connect(){disconnect();
 try{const u=await claude.use('user');if(u){const m=await u.me();ME={id:m.id,name:m.name||'Player'}}}catch(e){}
-try{AI=await claude.use('sample')}catch(e){}
-try{DB=await claude.use('db');if(DB)DB.collection('squad').onSnapshot(s=>{LIVE=s.docs.map(d=>({id:d.id,...d.data()}));checkLB();if(S.tab==='squad')render()},()=>{});if(DB)DB.collection('tstats').onSnapshot(s=>{TS=s.docs.map(d=>({id:d.id,...d.data()}));checkLB();if(S.tab==='squad')render()},()=>{})}catch(e){}
-watchTeam();sync();fetchShared();checkAccount();if(S.tab==='guide'||S.tab==='squad')render()}
-function sync(){if(!ACCT||!DB||!ME||!ME.id)return;clearTimeout(sync.h);sync.h=setTimeout(()=>{DB.collection('data/users/'+ME.id).doc('save_'+PROF.username.toLowerCase()).set({s:S,t:Date.now()}).catch(()=>{});DB.collection('squad').doc(PID()).set({name:ME.name,items:tot(),xp:S.xp,level:lvOf(S.xp),av:S.av,t:Date.now()}).catch(()=>{});DB.collection('tstats').doc(PID()).set({team:S.team?S.team.code:'',tn:S.team?S.team.name:'',items:tot(),xp:S.xp,t:Date.now()}).catch(()=>{});if(S.team)DB.collection('teams/'+S.team.code+'/members').doc(PID()).set({name:ME.name,items:tot(),xp:S.xp,av:S.av,t:Date.now()}).catch(()=>{})},600)}
+try{DB=await claude.use('db');if(DB){SQU=DB.collection('squad').onSnapshot(s=>{LIVE=s.docs.map(d=>({id:d.id,...d.data()}));checkLB();if(S.tab==='squad')render()},()=>{});TSU=DB.collection('tstats').onSnapshot(s=>{TS=s.docs.map(d=>({id:d.id,...d.data()}));checkLB();if(S.tab==='squad')render()},()=>{})}}catch(e){}
+fetchShared()}
+async function initBackend(){try{AI=await claude.use('sample')}catch(e){}
+await connect();watchTeam();sync();checkAccount();if(S.tab==='guide'||S.tab==='squad')render()}
+function sync(){if(!ACCT||!DB||!ME||!ME.id)return;clearTimeout(sync.h);sync.h=setTimeout(()=>{if(!(ACCT&&DB&&ME&&ME.id&&PROF))return;DB.collection('data/users/'+ME.id).doc('save_'+PROF.username.toLowerCase()).set({s:S,t:Date.now()}).catch(()=>{});DB.collection('squad').doc(PID()).set({name:ME.name,items:tot(),xp:S.xp,level:lvOf(S.xp),av:S.av,t:Date.now()}).catch(()=>{});DB.collection('tstats').doc(PID()).set({team:S.team?S.team.code:'',tn:S.team?S.team.name:'',items:tot(),xp:S.xp,t:Date.now()}).catch(()=>{});if(S.team)DB.collection('teams/'+S.team.code+'/members').doc(PID()).set({name:ME.name,items:tot(),xp:S.xp,av:S.av,t:Date.now()}).catch(()=>{})},600)}
 function friendsCard(){const T='<h3>🏡 Friends in your neighbourhood</h3>';
 if(!(ACCT&&DB&&ME&&ME.id))return `<div class="card">${T}<p class="note">Log in to see your friends here.</p></div>`;
 if(!S.team)return `<div class="card">${T}<p class="note">Join or create a team to bring friends into your neighbourhood.</p><button class="ghost" data-tab="squad">Go to Teams</button></div>`;
@@ -351,22 +354,46 @@ const showBox=''&&'<label style="display:flex;gap:8px;align-items:center;margin:
 const nm=PROF?esc(PROF.username):(()=>{try{return esc(localStorage.getItem('rq_user')||'')}catch(e){return''}})();
 const b={load:'<p>Loading…</p>',
 login:true?`${fld('lName','Username').replace('<input','<input value="'+nm+'"')}${fld('pw','Password','password')}${showBox}${keepBox}<button class="lime" data-a="login" style="width:100%">Log in</button>`:sw('create','No account found yet. Create one to save your progress.'),
-create:false?sw('login',`An account (<b>${nm}</b>) already exists here. Log in to continue.`):`${fld('uName','Username (3–16 letters or numbers)')}${fld('pw','Password (at least 8 characters)','password')}${fld('pw2','Confirm password','password')}${showBox}${keepBox}<button class="lime" data-a="signup" style="width:100%">Create account</button><p class="note">Your progress is saved to your account. Passwords can’t be recovered, so keep yours safe.</p>`,
+create:false?sw('login',`An account (<b>${nm}</b>) already exists here. Log in to continue.`):`${fld('uName','Username (3–16 letters or numbers)')}<p id="uHint" class="note" style="margin:-4px 0 8px;min-height:18px;text-align:left"></p>${fld('pw','Password (at least 8 characters)','password')}${fld('pw2','Confirm password','password')}${showBox}${keepBox}<button class="lime" data-a="signup" style="width:100%">Create account</button><p class="note">${LOCAL?'Your progress is saved on this device.':'Log in with this username and password on any device.'} Passwords can’t be recovered, so keep yours safe.</p>`,
 setpw:`<p>Hi <b>${nm}</b>! Add a password to secure your account.</p>${fld('pw','Password (at least 8 characters)','password')}${fld('pw2','Confirm password','password')}${showBox}${keepBox}<button class="lime" data-a="setpw" style="width:100%">Save password</button>`,
 guest:'<p class="note">Accounts need you to be signed in to claude.ai with contributor access to this page. You can still play as a guest.</p>'}[GATE]||'';
 const tabs=GATE==='login'||GATE==='create'?`<div class="gtabs"><button data-gt="login" aria-pressed="${GATE==='login'}">Log in</button><button data-gt="create" aria-pressed="${GATE==='create'}">Create account</button></div>`:'';
 g.innerHTML=`<div class="gatebox"><div style="font-size:54px">♻️</div><h1 style="margin:4px 0 4px">RecycleQuest</h1><p class="note" style="margin:0 0 14px">Log in or create an account to save your progress and team up with friends.</p>${tabs}${b}${GATE==='guest'?'<button class="ghost" data-a="guest" style="width:100%;margin-top:10px">Continue as guest</button>':''}</div>`}
 document.addEventListener('click',e=>{const t=e.target.closest('[data-gt]');if(t){GATE=t.dataset.gt;gate()}});
+let uTimer=0;
+document.addEventListener('input',e=>{if(e.target.id!=='uName'||LOCAL||!(window.RQ_AUTH&&RQ_AUTH.enabled()))return;const h=$('#uHint'),n=e.target.value.trim();clearTimeout(uTimer);if(!h)return;
+if(!n){h.textContent='';return}
+if(!/^[A-Za-z0-9_]{3,16}$/.test(n)){h.textContent='Use 3–16 letters, numbers or _';return}
+h.textContent='Checking…';uTimer=setTimeout(async()=>{try{const ok=await RQ_AUTH.available(n),f=$('#uName');if(f&&f.value.trim()===n&&$('#uHint'))$('#uHint').textContent=ok?'✅ Username is available':'❌ That username is taken'}catch(x){const hh=$('#uHint');if(hh)hh.textContent=''}},400)});
 document.addEventListener('change',e=>{if(e.target.id==='showpw')['pw','pw2'].forEach(i=>{const f=$('#'+i);if(f)f.type=e.target.checked?'text':'password'})});
+const nameOf=u=>(u&&u.user_metadata&&u.user_metadata.username)||String((u&&u.email)||'').split('@')[0]||'Player';
+const authMsg=(e,su)=>{const m=String(e&&e.message||e||''),c=e&&e.code||'';
+if(c==='user_already_exists'||/already (been )?registered|already exists/i.test(m))return'That username is taken. Try another or log in.';
+if(m==='confirm_email_on')return'Sign-up is blocked. In Supabase, turn off “Confirm email” under Authentication > Providers > Email.';
+if(c==='email_provider_disabled'||/email.*(disabled|not enabled)/i.test(m))return'Email sign-in is off in Supabase. Enable the Email provider.';
+if(c==='invalid_credentials'||/invalid login/i.test(m))return'Wrong username or password';
+if(c==='weak_password')return'That password is too weak. Try a longer one.';
+if(c==='over_request_rate_limit'||/rate limit|too many/i.test(m))return'Too many tries. Wait a minute and try again.';
+if(/fetch|network|offline/i.test(m))return'No connection. Check your internet and try again.';
+return(su?'Couldn’t create the account: ':'Couldn’t log in: ')+m};
 async function checkAccount(){if(IN)return;GATE='load';gate();
+if(window.RQ_AUTH&&RQ_AUTH.enabled()){LOCAL=false;let u=null;try{u=await RQ_AUTH.user()}catch(e){}
+if(u&&getFlag()==='a'){if(!(DB&&ME&&ME.id))await connect();if(DB&&ME&&ME.id){PROF={username:nameOf(u)};await enter(false,true);return}}
+if(u){try{await RQ_AUTH.signOut()}catch(e){}disconnect()}
+let seen=null;try{seen=localStorage.getItem('rq_user')}catch(e){}
+GATE=seen?'login':'create';gate();return}
 if(!(window.crypto&&crypto.subtle)){GATE='guest';gate();return}
-if(!(DB&&ME&&ME.id)){LOCAL=true;const A=accts();let last=null;try{last=localStorage.getItem('rq_last')}catch(e){}if(getFlag()==='a'&&last&&A[last.toLowerCase()]){enterLocal(A[last.toLowerCase()],true,false);return}GATE=Object.keys(A).length?'login':'create';gate();return}
-let last=null,seen=null;try{last=localStorage.getItem('rq_last');seen=localStorage.getItem('rq_user')}catch(e){}
-try{if(getFlag()==='a'&&last){PROF=await getAcct(last);if(PROF){enter(false,true);return}}if(!seen){const d=await DB.collection(PP()).doc('profile').get();if(d.exists)seen='1'}}catch(e){GATE='guest';gate();return}
-GATE=seen?'login':'create';gate()}
+LOCAL=true;const A=accts();let last=null;try{last=localStorage.getItem('rq_last')}catch(e){}if(getFlag()==='a'&&last&&A[last.toLowerCase()]){enterLocal(A[last.toLowerCase()],true,false);return}GATE=Object.keys(A).length?'login':'create';gate()}
 async function getAcct(n){n=n.toLowerCase();const C=DB.collection(PP());let d=await C.doc('acct_'+n).get();if(d.exists)return d.data();d=await C.doc('profile').get();if(d.exists&&d.data().hash&&String(d.data().username).toLowerCase()===n){const p=d.data();await C.doc('acct_'+n).set(p);try{const v=await C.doc('save').get();if(v.exists)await C.doc('save_'+n).set(v.data())}catch(e){}return p}return null}
-async function signupB(){const n=$('#uName').value.trim();if(!/^[A-Za-z0-9_]{3,16}$/.test(n)){toast('Use 3–16 letters, numbers or _');return}try{if(await getAcct(n)){toast('That username is taken. Log in instead.');return}const pw=await pwOk();if(!pw)return;const keep=$('#keep').checked;PROF={username:n,...await cred(pw),t:Date.now()};await DB.collection(PP()).doc('acct_'+n.toLowerCase()).set(PROF);await enter(true,keep)}catch(e){PROF=null;toast('Couldn’t create the account. You may need contributor access.')}}
-async function loginB(){const n=$('#lName').value.trim(),pw=$('#pw').value,keep=$('#keep').checked;if(!n||!pw){toast('Enter your username and password');return}try{const p=await getAcct(n);if(!p){toast('Username not found');return}if(await hashPw(pw,unb(p.salt))!==p.hash){toast('Wrong password');return}PROF=p;await enter(false,keep)}catch(e){PROF=null;toast('Couldn’t log in. Try again.')}}
+async function signupB(){const n=$('#uName').value.trim();if(!/^[A-Za-z0-9_]{3,16}$/.test(n)){toast('Use 3–16 letters, numbers or _');return}
+const pw=await pwOk();if(!pw)return;const keep=$('#keep').checked,btn=document.querySelector('#gate [data-a="signup"]');if(btn)btn.disabled=true;
+try{try{if(!(await RQ_AUTH.available(n))){toast('That username is taken. Try another or log in.');return}}catch(e){}
+const u=await RQ_AUTH.signUp(n,pw);await connect();PROF={username:nameOf(u)||n};await enter(true,keep)}
+catch(e){PROF=null;toast(authMsg(e,true))}finally{if(btn)btn.disabled=false}}
+async function loginB(){const n=$('#lName').value.trim(),pw=$('#pw').value,keep=$('#keep').checked;if(!n||!pw){toast('Enter your username and password');return}
+const btn=document.querySelector('#gate [data-a="login"]');if(btn)btn.disabled=true;
+try{const u=await RQ_AUTH.signIn(n,pw);await connect();PROF={username:nameOf(u)||n};await enter(false,keep)}
+catch(e){PROF=null;toast(authMsg(e,false))}finally{if(btn)btn.disabled=false}}
 async function enter(fresh,keep){if(!fresh)try{const d=await DB.collection(PP()).doc('save_'+PROF.username.toLowerCase()).get();if(d.exists&&d.data().s)S={...def(),...d.data().s}}catch(e){}
 ME.name=PROF.username;ACCT=true;IN=true;setFlag(keep?'a':null);try{localStorage.setItem('rq_user',PROF.username);keep?localStorage.setItem('rq_last',PROF.username):localStorage.removeItem('rq_last')}catch(e){}save();watchTeam();gate();updateScene(1);render();toast('Welcome, '+PROF.username+'!')}
 async function pwOk(){const pw=$('#pw').value,pw2=$('#pw2')?$('#pw2').value:pw;if(pw.length<8){toast('Password needs at least 8 characters');return null}if(pw!==pw2){toast('Passwords don’t match');return null}return pw}
@@ -384,8 +411,12 @@ async function loginOld(){const pw=$('#pw').value,keep=$('#keep').checked;if($('
 try{if(await hashPw(pw,unb(PROF.salt))!==PROF.hash){toast('Wrong password');return}await enter(false,keep)}catch(e){toast('Couldn’t log in. Try again.')}}
 async function forgot(t){if(!t.dataset.sure){t.dataset.sure=1;t.textContent='Tap again to delete this account';return}
 try{await DB.collection(PP()).doc('profile').delete();await DB.collection(PP()).doc('save').delete()}catch(e){}PROF=null;GATE='create';gate()}
-function logout(t){if(!ACCT){setFlag(null);IN=false;checkAccount();return}
-clearTimeout(sync.h);ACCT=false;IN=false;PROF=null;setFlag(null);S=def();try{localStorage.removeItem('rq1')}catch(e){}watchTeam();updateScene(1);render();checkAccount()}
+async function flushSave(){try{if(ACCT&&DB&&ME&&ME.id&&PROF)await DB.collection('data/users/'+ME.id).doc('save_'+PROF.username.toLowerCase()).set({s:S,t:Date.now()})}catch(e){}}
+async function logout(t){if(!ACCT){setFlag(null);IN=false;checkAccount();return}
+clearTimeout(sync.h);const cloud=!LOCAL;if(cloud)await flushSave();
+ACCT=false;IN=false;PROF=null;setFlag(null);S=def();try{localStorage.removeItem('rq1')}catch(e){}
+if(cloud){try{await RQ_AUTH.signOut()}catch(e){}}
+watchTeam();if(cloud)disconnect();updateScene(1);render();checkAccount()}
 document.addEventListener('click',e=>{const t=e.target.closest('[data-a="login"],[data-a="signup"],[data-a="setpw"],[data-a="forgot"],[data-a="guest"],[data-a="logout"]');if(!t)return;const a=t.dataset.a;
 if(a==='login')login();else if(a==='signup')signup();else if(a==='setpw')setPw();else if(a==='forgot')forgot(t);else if(a==='guest'){IN=true;setFlag('g');gate();render();updateScene(1)}else logout(t)});
 document.addEventListener('keydown',e=>{if(e.key==='Enter'&&!IN&&e.target.tagName==='INPUT'){const b=document.querySelector('#gate [data-a="login"],#gate [data-a="signup"],#gate [data-a="setpw"]');if(b)b.click()}});

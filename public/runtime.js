@@ -3,7 +3,7 @@
    (anonymous sign-in + one "docs" table) and the browser. */
 (function () {
   'use strict';
-  if (typeof window !== 'undefined') window.RQ_RUNTIME = 4;
+  if (typeof window !== 'undefined') window.RQ_RUNTIME = 5;
 
   function makeDB(sb) {
     var uuid = function () { return (crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) + Math.random().toString(16).slice(2)); };
@@ -87,7 +87,7 @@
 
   if (typeof module !== 'undefined' && module.exports) { module.exports = { makeDB: makeDB }; return; }
 
-  var cfg = window.RQ_SUPABASE || {}, sb = null, userP = null;
+  var cfg = window.RQ_SUPABASE || {}, sb = null;
 
   function client() {
     if (sb) return sb;
@@ -96,17 +96,38 @@
     sb = window.supabase.createClient(cfg.url, cfg.anonKey, { auth: { persistSession: true, autoRefreshToken: true } });
     return sb;
   }
+  // Real accounts: a username is stored as the Supabase email "<username>@rq-players.app".
+  // Supabase guarantees emails are unique, so usernames are unique (case-insensitive) and the
+  // same username + password gives the same user id on every device.
+  var DOMAIN = '@rq-players.app';
+  function emailOf(n) { return String(n).trim().toLowerCase() + DOMAIN; }
   function getUser(c) {
-    if (userP) return userP;
-    userP = (async function () {
-      var s = await c.auth.getSession();
-      if (s.data && s.data.session) return s.data.session.user;
-      var r = await c.auth.signInAnonymously();
+    return c.auth.getSession().then(function (s) { return s.data && s.data.session ? s.data.session.user : null; });
+  }
+  window.RQ_AUTH = {
+    enabled: function () { return !!client(); },
+    user: async function () { var c = client(); return c ? getUser(c) : null; },
+    available: async function (n) {
+      var c = client(); if (!c) throw new Error('offline');
+      var r = await c.rpc('username_available', { u: String(n).trim().toLowerCase() });
+      if (r.error) throw r.error;
+      return !!r.data;
+    },
+    signUp: async function (n, pw) {
+      var c = client(); if (!c) throw new Error('offline');
+      var r = await c.auth.signUp({ email: emailOf(n), password: pw, options: { data: { username: String(n).trim() } } });
+      if (r.error) throw r.error;
+      if (!r.data.session) throw new Error('confirm_email_on');
+      return r.data.user;
+    },
+    signIn: async function (n, pw) {
+      var c = client(); if (!c) throw new Error('offline');
+      var r = await c.auth.signInWithPassword({ email: emailOf(n), password: pw });
       if (r.error) throw r.error;
       return r.data.user;
-    })().catch(function (e) { userP = null; throw e; });
-    return userP;
-  }
+    },
+    signOut: async function () { var c = client(); if (c) await c.auth.signOut(); }
+  };
 
   if (!window.claude) {
     window.claude = {
@@ -121,8 +142,9 @@
         }
         if (n === 'user' || n === 'db') {
           var c = client(); if (!c) return null;
-          var u; try { u = await getUser(c); } catch (e) { window.RQ_STATUS = 'sign-in failed: ' + (e && e.message ? e.message : e); return null; }
-          if (n === 'user') return { me: async function () { return { id: u.id, name: 'Player' }; } };
+          var u; try { u = await getUser(c); } catch (e) { window.RQ_STATUS = 'session error: ' + (e && e.message ? e.message : e); return null; }
+          if (!u) { window.RQ_STATUS = 'not signed in'; return null; }
+          if (n === 'user') return { me: async function () { return { id: u.id, name: (u.user_metadata && u.user_metadata.username) || 'Player' }; } };
           return makeDB(c);
         }
         return null;
