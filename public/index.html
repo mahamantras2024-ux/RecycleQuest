@@ -10,12 +10,9 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
 <link rel="icon" href="/icons/icon-192.png">
-<script>
-/* Standalone runtime: replaces the Claude artifact services when hosted on your own domain. */
-if(!window.claude){window.claude={use:async function(n){
- if(n==='downloads')return{save:async function(o){var b=new Blob([o.data],{type:'text/csv'}),a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=o.filename||'download.csv';document.body.appendChild(a);a.click();setTimeout(function(){URL.revokeObjectURL(a.href);a.remove()},500)}};
- return null}}}
-</script>
+<script src="/config.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script src="/runtime.js"></script>
 
 <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
