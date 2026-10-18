@@ -88,9 +88,7 @@ const LV=[{n:'Concrete Jungle',x:0,d:'Grey blocks and an empty courtyard.'},{n:'
 const lvOf=x=>LV.reduce((l,v,i)=>x>=v.x?i+1:l,1);
 const MV=[
 {k:'bottle',v:[{id:'bottle_a',i:'🧴',t:'Recycle 2 plastic bottles',how:'Empty each one, rinse it and shake it dry before it goes in the blue bin.',n:2,xp:10},{id:'bottle_b',i:'💧',t:'Recycle 3 drink bottles',how:'',n:3,xp:8}]},
-{k:'cardboard',v:[{id:'card_b',i:'📬',t:'Flatten 2 delivery boxes',how:'Flatten both and bin only the dry, clean ones. Soaked or greasy boxes don’t belong in the blue bin.',n:2,xp:10}]},
 {k:'can',v:[{id:'can_a',i:'🥫',t:'Recycle 2 drink cans',how:'Pour out any drink, rinse the can and let it drain before binning.',n:2,xp:10},{id:'can_b',i:'🥫',t:'Recycle 1 food can',how:'Scrape out the food, rinse it clean and let it dry before binning.',n:1,xp:15}]},
-{k:'takeaway',v:[{id:'take_b',i:'🥡',t:'Sort 2 takeaway containers',how:'Clean ones go in the blue bin, greasy ones in general waste. Tap Done for each one you sort correctly.',n:2,xp:15}]},
 {k:'carton',v:[{id:'cart_a',i:'🥛',t:'Rinse and flatten 1 milk carton',how:'Empty it, rinse it well and flatten it. Unsure about your carton? Ask Bloobin first.',n:1,xp:20},{id:'cart_b',i:'🧃',t:'Rinse 2 milk cartons',how:'Empty each carton, rinse it out and flatten it. Ask Bloobin if you’re unsure it is accepted.',n:2,xp:10}]}];
 const MS=[...MV.flatMap(g=>g.v.map(m=>({...m,k:g.k}))),{id:'visit',k:null,i:'📍',t:'Recycle at a bin found on the Map tab',how:'Pick one of the 5 nearest bins, recycle there, then tap “I recycled here”.',n:1,xp:25}];
 const dayIdx=()=>{const[y,m,d]=today().split('-').map(Number);return Math.floor(Date.UTC(y,m-1,d)/864e5)};
