@@ -69,13 +69,13 @@ svg text{font-family:Fredoka,sans-serif}
 .tabs{display:flex;gap:6px;margin-top:8px}.tab{flex:1;background:var(--pur2);color:var(--ink);min-height:40px;padding:6px 2px;font-size:13px}.tab[aria-pressed=true]{background:var(--pur);color:#fff}.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin:6px 0 12px}.grid.g2{grid-template-columns:repeat(2,1fr)}.grid.g4{grid-template-columns:repeat(4,1fr)}.grid .acc{width:auto;margin:0;min-height:64px;justify-content:center}.sws{display:flex;flex-wrap:wrap;gap:2px;margin:4px 0 12px}
 .ico{display:inline-flex;align-items:center;justify-content:center;width:48px;height:48px;border-radius:14px;box-shadow:0 2px 0 rgba(0,0,0,.2)}
 #gate{position:fixed;inset:0;background:linear-gradient(160deg,#7b4bb8,#4a2a73);color:#FFF6E0;z-index:30;display:none;align-items:center;justify-content:center;padding:20px;text-align:center}.gatebox{max-width:360px;width:100%}#gate h1,#gate h2{color:#B7F03C}#gate .note{color:#E7DAF7}#gate b{color:#fff}
-header{flex-wrap:wrap}h1{white-space:nowrap}@media (max-width:420px){h1{font-size:21px}.avl{display:none}}
+header{flex-wrap:wrap}#avBtn,#ntBtn{width:48px;height:48px;padding:0;border-radius:50%;display:flex;align-items:center;justify-content:center;flex:none;position:relative}#ntBtn{font-size:22px}#ntBtn.new::after{content:"";position:absolute;top:8px;right:9px;width:11px;height:11px;border-radius:50%;background:#E94F8A;border:2px solid var(--bg)}h1{white-space:nowrap}@media (max-width:420px){h1{font-size:21px}}
 .mis .t small{display:block}.gd details:first-child{border-top:0}
 .gtabs{display:flex;gap:6px;margin-bottom:14px}.gtabs button{flex:1;background:#ffffff26;color:#FFF6E0}.gtabs button[aria-pressed=true]{background:var(--lime);color:#2E1A47}
 </style></head>
 <body>
 <div id="app">
-<header><h1>♻ RecycleQuest</h1><button class="ghost" data-tab="why" aria-label="Why RecycleQuest exists" style="margin-left:auto;padding:4px 12px">💡</button><button class="ghost" id="avBtn" aria-label="Customise avatar" style="padding:2px 10px 2px 4px;display:flex;align-items:center;gap:6px"><span id="avMini" style="width:40px;height:40px;display:block"></span><span class="avl">Edit</span></button><button class="ghost" id="lgBtn" data-a="logout" style="padding:4px 12px;font-size:14px">Log out</button></header>
+<header><h1>♻ RecycleQuest</h1><button class="ghost" id="avBtn" aria-label="Customise avatar" style="margin-left:auto"><span id="avMini" style="width:40px;height:40px;display:block"></span></button><button class="ghost" id="ntBtn" data-a="notifs" aria-label="Notifications">🔔</button></header>
 <section id="scene" data-lv="1" aria-label="Your neighbourhood, isometric illustration"></section>
 <main id="view"></main>
 </div>
@@ -88,11 +88,13 @@ const LV=[{n:'🏙️ Concrete Jungle',x:0,d:'Grey blocks and an empty courtyard
 const lvOf=x=>LV.reduce((l,v,i)=>x>=v.x?i+1:l,1);
 const MV=[
 {k:'bottle',v:[{id:'bottle_a',i:'🧴',t:'Recycle 2 plastic bottles',how:'Empty each one, rinse it and shake it dry before it goes in the blue bin.',n:2,xp:10},{id:'bottle_b',i:'💧',t:'Recycle 3 drink bottles',how:'',n:3,xp:8}]},
-{k:'can',v:[{id:'can_a',i:'🥫',t:'Recycle 2 drink cans',how:'Pour out any drink, rinse the can and let it drain before binning.',n:2,xp:10},{id:'can_b',i:'🥫',t:'Recycle 1 food can',how:'Scrape out the food, rinse it clean and let it dry before binning.',n:1,xp:15}]},
+{k:'can',v:[{id:'can_a',i:'🥫',t:'Recycle 2 food cans',how:'Pour out any drink, rinse the can and let it drain before binning.',n:2,xp:10},{id:'can_b',i:'🥫',t:'Recycle 1 food can',how:'Scrape out the food, rinse it clean and let it dry before binning.',n:1,xp:15}]},
 {k:'carton',v:[{id:'cart_a',i:'🥛',t:'Rinse and flatten 1 milk carton',how:'Empty it, rinse it well and flatten it. Unsure about your carton? Ask Bloobin first.',n:1,xp:20},{id:'cart_b',i:'🧃',t:'Rinse 2 milk cartons',how:'Empty each carton, rinse it out and flatten it. Ask Bloobin if you’re unsure it is accepted.',n:2,xp:10}]}];
-const MS=[...MV.flatMap(g=>g.v.map(m=>({...m,k:g.k}))),{id:'visit',k:null,i:'📍',t:'Recycle at a bin found on the Map tab',how:'Pick one of the 5 nearest bins, recycle there, then tap “I recycled here”.',n:1,xp:25}];
+const MS=[...MV.flatMap(g=>g.v.map(m=>({...m,k:g.k}))),{id:'ewaste',k:'ewaste',i:'🔌',t:'Recycle electronic waste',how:'Take old phones, chargers, cables, batteries or small appliances to an e-waste collection point. Never put them in the blue bin. Ask Bloobin if unsure.',n:1,xp:30},{id:'bloobin',k:null,i:'🤖',t:'Ask Bloobin AI about an item',how:'Not sure if something is recyclable? Ask Bloobin, NEA’s recycling assistant.',n:1,xp:10},{id:'visit',k:null,i:'📍',t:'Recycle at a bin found on the Map tab',how:'Pick one of the 5 nearest bins, recycle there, then tap “I recycled here”.',n:1,xp:25}];
 const dayIdx=()=>{const[y,m,d]=today().split('-').map(Number);return Math.floor(Date.UTC(y,m-1,d)/864e5)};
-const DAILY=()=>[...MV.map((g,gi)=>MS.find(m=>m.id===g.v[(dayIdx()+gi)%g.v.length].id)),MS.find(m=>m.id==='visit')];
+const CMICONS=['♻️','🌱','🧴','📦','🔋','👕','📚','🛍️','🧹','🌍'];
+const ALLM=()=>[...MS,...(S.cm||[])];
+const DAILY=()=>[...MV.map((g,gi)=>MS.find(m=>m.id===g.v[(dayIdx()+gi)%g.v.length].id)),...['ewaste','bloobin','visit'].map(id=>MS.find(m=>m.id===id)),...(S.cm||[])];
 const ACC=[{id:'none',n:'None',i:'—',x:0},{id:'glasses',n:'Glasses',i:'👓',x:0},{id:'tote',n:'Tote bag',i:'👜',x:20},{id:'bow',n:'Bow',i:'🎀',x:30},{id:'cap',n:'Cap',i:'🧢',x:50},{id:'phones',n:'Headphones',i:'🎧',x:100},{id:'sprout',n:'Sprout',i:'🌱',x:150},{id:'flower',n:'Flower crown',i:'🌸',x:200},{id:'scarf',n:'Scarf',i:'🧣',x:250},{id:'crown',n:'Crown',i:'👑',x:450}];
 const OUT=[{id:'tee',n:'Tee',i:'👕',x:0},{id:'hoodie',n:'Hoodie',i:'🧥',x:40},{id:'overalls',n:'Overalls',i:'👖',x:80},{id:'dress',n:'Dress',i:'👗',x:120},{id:'jersey',n:'Team jersey',i:'⚽',x:200},{id:'cape',n:'Eco-hero cape',i:'🦸',x:300}];
 const HSTY=[{id:'short',n:'Short'},{id:'buzz',n:'Buzz'},{id:'bob',n:'Bob'},{id:'long',n:'Long'},{id:'pony',n:'Ponytail'},{id:'buns',n:'Buns'},{id:'curly',n:'Curly'}];
@@ -103,7 +105,7 @@ const GUIDE=[
 {i:'🥛',n:'Milk cartons',ok:'Empty and rinse well, then flatten.',no:'Cartons with milk left inside.',tip:'Carton acceptance can vary. Check the item with Bloobin before you bin it.'},
 {i:'🥡',n:'Takeaway containers',ok:'Only if they are clean and free of food and grease.',no:'Greasy or dirty containers. Bin these as general waste instead.',tip:'Not every disposable plastic is recyclable. Check first.'},
 {i:'🥫',n:'Cans',ok:'Rinse and dry clean metal cans.',no:'Cans with food or drink still inside.',tip:'Bloobin takes clean metal cans only.'}];
-const def=()=>({xp:0,streak:0,last:'',date:'',did:false,items:{bottle:0,cardboard:0,can:0,takeaway:0,carton:0},mp:{},days:0,av:{skin:0,hair:0,shirt:0,acc:'none'},visited:{},tab:'home'});
+const def=()=>({xp:0,streak:0,last:'',date:'',did:false,items:{bottle:0,cardboard:0,can:0,takeaway:0,carton:0,ewaste:0},mp:{},days:0,av:{skin:0,hair:0,shirt:0,acc:'none'},visited:{},tab:'home'});
 let S=def();
 try{const r=localStorage.getItem('rq1');if(r)S={...def(),...JSON.parse(r)}}catch(e){}
 const save=()=>{try{localStorage.setItem(skey(),JSON.stringify(S))}catch(e){}try{sync()}catch(e){}};
@@ -170,7 +172,7 @@ function addXP(n,why){const o=lvOf(S.xp),before=S.xp;S.xp+=n;const l=lvOf(S.xp);
 if(l>o){notifyLevel(l);updateScene();const un=[...ACC,...OUT].filter(a=>a.x>0&&a.x>before&&a.x<=S.xp);
 modal(`<div style="text-align:center"><div style="font-size:54px">🎉</div><h2 style="margin:4px 0">Level ${l} unlocked!</h2><h3>${LV[l-1].n}</h3><p>${LV[l-1].d}</p>${un.length?`<p><b>Unlocked:</b> ${un.map(a=>a.i+' '+a.n).join(', ')}</p>`:''}<button class="lime" data-a="close">See my neighbourhood</button></div>`)}
 else{updateScene(1);toast(`+${n} XP · ${why}`)}}
-function logItem(id){const m=MS.find(x=>x.id===id);if(!m||(S.mp[id]||0)>=m.n)return;S.mp[id]=(S.mp[id]||0)+1;if(m.k&&m.k in S.items)S.items[m.k]++;touch();addXP(m.xp,S.mp[id]>=m.n?'mission complete!':'action logged!');render()}
+function logItem(id){const m=ALLM().find(x=>x.id===id);if(!m||(S.mp[id]||0)>=m.n)return;S.mp[id]=(S.mp[id]||0)+1;if(m.k)S.items[m.k]=(S.items[m.k]||0)+1;touch();addXP(m.xp,S.mp[id]>=m.n?'mission complete!':'action logged!');render()}
 const today=()=>{const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')};
 const yest=()=>{const d=new Date();d.setDate(d.getDate()-1);return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')};
 function rollover(){const t=today();if(S.date===t)return;if(S.date)S.days++;S.date=t;S.did=false;S.chk=0;S.rv={};S.mp={};save()}
@@ -180,12 +182,12 @@ function modal(h){const b=$('#mbody'),st=b.scrollTop;b.innerHTML=h;b.scrollTop=s
 /* ---------- views ---------- */
 const tot=()=>Object.values(S.items).reduce((a,b)=>a+b,0);
 /* Pulau Semakau: rough weight per item (grams). Estimates, not measurements. */
-const SEMW={bottle:25,cardboard:200,can:20,takeaway:30,carton:30};
+const SEMW={bottle:25,cardboard:200,can:20,takeaway:30,carton:30,ewaste:150};
 const semG=()=>Object.entries(S.items).reduce((a,[k,n])=>a+(SEMW[k]||0)*n,0);
 const fmtW=g=>g<1000?Math.round(g)+' g':(g/1000).toFixed(g<10000?2:1)+' kg';
 function semCard(){
 const g=semG(),ms=[500,1000,2500,5000,10000,25000,50000],nxm=ms.find(m=>m>g)||0,prev=ms.filter(m=>m<=g).pop()||0,mp=nxm?Math.round((g-prev)/(nxm-prev)*100):100,days=(g/360).toFixed(1);
-const nm={bottle:['🧴','Bottles'],cardboard:['📦','Cardboard'],can:['🥫','Cans'],takeaway:['🥡','Takeaway'],carton:['🥛','Cartons']};
+const nm={bottle:['🧴','Bottles'],cardboard:['📦','Cardboard'],can:['🥫','Cans'],takeaway:['🥡','Takeaway'],carton:['🥛','Cartons'],ewaste:['🔌','E-waste']};
 return `<div class="card"><h3>🏝️ Pulau Semakau landfill saved</h3>
 <p class="note" style="margin:0 0 10px">Semakau is Singapore’s only landfill, projected to be full by about 2035. Recycling right helps it last longer.</p>
 <div class="chips"><div class="chip"><b>⚖️ ${fmtW(g)}</b><span>Kept out of landfill</span></div><div class="chip"><b>📅 ${days}</b><span>Days of one person’s waste</span></div></div>
@@ -196,9 +198,12 @@ const done=()=>DAILY().filter(m=>(S.mp[m.id]||0)>=m.n).length;
 const V={
 home(){const l=lvOf(S.xp);
 return `<div class="chips" style="margin-top:12px"><div class="chip"><b>⭐ ${S.xp}</b><span>XP</span></div><div class="chip"><b>🌳 ${l}</b><span>Level</span></div><div class="chip"><b>🔥 ${streak()}</b><span>Day streak</span></div></div>
-<div class="card"><h3>🎯 Today’s missions</h3><p class="note">${done()}/${DAILY().length} done</p><div class="bar"><i style="width:${done()/DAILY().length*100}%"></i></div><button class="lime" data-tab="missions" style="margin-top:10px;width:100%">${done()>=DAILY().length?'View missions':'Open missions'}</button></div>
-${notifCard()}`},
-missions(){const D=DAILY();return `<h2>Today’s missions <span class="note">(${done()}/${D.length} done)</span></h2>${D.map(m=>{const c=S.mp[m.id]||0,ok=c>=m.n;return `<div class="card mis ${ok?'done':''}"><span class="ic">${m.i}</span><div class="t"><h3>${m.t}</h3><small><b>${m.n>1?`${c}/${m.n} done · `:''}+${m.xp} XP${m.n>1?' each':''}</b></small></div>${ok?'<b>✅</b>':m.id==='visit'?'<button class="ghost" data-tab="map">Go</button>':`<button class="lime" data-log="${m.id}">${m.n>1?`Done (${c+1}/${m.n})`:'Done'}</button>`}</div>`}).join('')}`},
+<div class="card"><h3>🎯 Today’s missions</h3><p class="note">${done()}/${DAILY().length} done</p><div class="bar"><i style="width:${done()/DAILY().length*100}%"></i></div><button class="lime" data-tab="missions" style="margin-top:10px;width:100%">${done()>=DAILY().length?'View missions':'Open missions'}</button></div>`},
+missions(){const D=DAILY(),cm=S.cm||[],inp='width:100%;box-sizing:border-box;font:inherit;padding:10px 12px;min-height:44px;border-radius:12px;border:2px solid var(--line);background:var(--card);color:var(--ink)';
+return `<h2>Today’s missions <span class="note">(${done()}/${D.length} done)</span></h2><div class="card"><h3>✏️ Create your own mission</h3><p class="note" style="margin:4px 0 10px">Your own daily goal · 5 XP each</p>${`<div style="display:flex;gap:8px;margin-bottom:8px"><select id="cmI" aria-label="Mission icon" style="${inp};width:76px;flex:none">${CMICONS.map(x=>`<option>${x}</option>`).join('')}</select><input id="cmT" maxlength="40" placeholder="e.g. Recycle 3 paper items" aria-label="Mission name" style="${inp}"></div><button class="lime" data-a="addcm" style="width:100%">Add mission</button>`}</div>
+${D.map(m=>{const c=S.mp[m.id]||0,ok=c>=m.n;
+const act=ok?'<b>✅</b>':m.id==='visit'?'<button class="ghost" data-tab="map">Go</button>':m.id==='bloobin'?'<span style="display:flex;gap:6px"><a class="btn lime" data-log="bloobin" href="https://go.gov.sg/askbloobin" target="_blank" rel="noopener" style="padding:8px 10px">WhatsApp</a><a class="btn ghost" data-log="bloobin" href="https://go.gov.sg/askbloobintg" target="_blank" rel="noopener" style="padding:8px 10px">Telegram</a></span>':`<button class="lime" data-log="${m.id}">${m.n>1?`Done (${c+1}/${m.n})`:'Done'}</button>`;
+return `<div class="card mis ${ok?'done':''}"><span class="ic">${esc(m.i)}</span><div class="t"><h3>${esc(m.t)}</h3><small><b>${m.n>1?`${c}/${m.n} done · `:''}+${m.xp} XP${m.n>1?' each':''}${m.custom?' · your mission':''}</b></small></div>${act}${m.custom?`<button class="ghost" data-a="delcm" data-id="${esc(m.id)}" aria-label="Delete mission ${esc(m.t)}" style="padding:4px 10px;min-height:36px">✕</button>`:''}</div>`}).join('')}`},
 why(){return `<h2>Why RecycleQuest exists</h2><div class="card"><h3>The problem</h3><p class="note">Recycling is a behaviour gap. NEA reports that about 40% of items put in blue bins can’t be recycled, mostly because of food, liquids or the wrong items. People want to recycle, but small mistakes make it harder.</p></div>
 <div class="card"><h3>How RecycleQuest helps</h3><p class="note">🎯 Daily missions turn recycling into small, clear actions.<br><br>⭐ Instant XP and level-ups give quick feedback.<br><br>🔥 Streaks reward coming back every day.<br><br>🏘 Your neighbourhood visibly improves as you recycle.<br><br>🤝 Teams share a goal and cheer each other on, with no money involved.<br><br>📍 A real bin map and the Bloobin guide make recycling right easier.</p></div>
 <button class="lime" data-tab="home" style="width:100%">Back to my neighbourhood</button>`},
@@ -208,7 +213,7 @@ guide(){return `<h2>Recycling guide</h2><div class="card" style="background:var(
 `},
 map(){return BINS?mapReal():mapLoad()},
 impact(){const t=tot(),l=lvOf(S.xp),nx=LV[l],pc=nx?Math.round((S.xp-LV[l-1].x)/(nx.x-LV[l-1].x)*100):100,mx=Math.max(1,...Object.values(S.items));
-const nm={bottle:'🧴 Bottles',cardboard:'📦 Cardboard',can:'🥫 Cans',takeaway:'🥡 Takeaway',carton:'🥛 Cartons'};
+const nm={bottle:'🧴 Bottles',cardboard:'📦 Cardboard',can:'🥫 Cans',takeaway:'🥡 Takeaway',carton:'🥛 Cartons',ewaste:'🔌 E-waste'};
 return `<h2>Your impact</h2><div class="chips"><div class="chip"><b>${t}</b><span>Recycling actions</span></div><div class="chip"><b>${done()}</b><span>Missions today</span></div><div class="chip"><b>${S.days+1}</b><span>Days played</span></div></div>
 <div class="card"><h3>Community progress</h3><p style="margin:0 0 6px"><b>Level ${l}: ${LV[l-1].n}</b></p><div class="bar"><i style="width:${pc}%"></i></div>
 <p class="note" style="margin:6px 0 0">${nx?`${nx.x-S.xp} XP to ${nx.n}`:'Max level reached!'}</p></div>
@@ -216,9 +221,11 @@ ${semCard()}
 `},
 squad(){return teamCard()+leaderboard()}
 };
-const TABS=[['home','🏘','Home'],['missions','🎯','Missions'],['guide','📖','Guide'],['map','📍','Map'],['impact','📊','Impact'],['squad','🤝','Teams']];
+const TABS=[['home','🏘','Home'],['missions','🎯','Missions'],['guide','📖','Guide'],['map','📍','Map'],['impact','📊','Impact'],['squad','🤝','Teams'],['why','ℹ️','About']];
 function render(){rollover();$('#tabs').innerHTML=TABS.map(t=>`<button data-tab="${t[0]}" aria-current="${S.tab===t[0]}"><span>${t[1]}</span>${t[2]}</button>`).join('');
-$('#view').innerHTML=V[S.tab]();$('#avMini').innerHTML=av(S.av,40);renderFriends();const lb=$('#lgBtn');if(lb&&!lb.dataset.sure)lb.textContent=ACCT?'Log out':'Sign in';$('#scene').style.display=S.tab==='home'?'':'none'}
+$('#view').innerHTML=V[S.tab]();$('#avMini').innerHTML=av(S.av,40);ntDot();renderFriends();const lb=$('#lgBtn');if(lb&&!lb.dataset.sure)lb.textContent=ACCT?'Log out':'Sign in';$('#scene').style.display=S.tab==='home'?'':'none'}
+function avatarMenu(){modal(`<div style="text-align:center"><div style="width:84px;height:84px;margin:0 auto 6px">${av(S.av,84)}</div>${ACCT&&PROF?`<h3 style="margin-bottom:12px">${esc(PROF.username)}</h3>`:'<div style="height:10px"></div>'}<button class="lime" data-a="editav" style="width:100%">🎨 Edit avatar</button><button class="ghost" id="lgBtn" data-a="logout" style="width:100%;margin-top:10px">${ACCT?'🚪 Log out':'🚪 Sign in'}</button><button class="ghost" data-a="close" style="width:100%;margin-top:10px;background:transparent">Close</button></div>`)}
+document.addEventListener('click',e=>{if(e.target.closest('[data-a="editav"]'))avatarModal()});
 let AVT='look';
 function avatarModal(){const a=S.av,G=a.g||'girl',HS=a.hs||'short',OU=a.out||'tee';
 const sw=(arr,key,cur,t)=>`<h3>${t}</h3><div class="sws">${arr.map((c,i)=>`<button class="sw" style="background:${c}" data-av="${key}:${i}" aria-pressed="${cur===i}" aria-label="${t} ${i+1}"></button>`).join('')}</div>`;
@@ -240,8 +247,15 @@ else if(t.dataset.a==='close'){$('#modal').classList.remove('show');render()}
 
 
 else if(t.dataset.av){const[k,v2]=t.dataset.av.split(':');if(k==='ch'){S.av.g=v2;S.av.hs=v2==='girl'?'long':'short'}else S.av[k]=['acc','g','hs','out'].includes(k)?v2:+v2;save();avatarModal();render()}
-else if(t.id==='avBtn'||t.closest('#avBtn'))avatarModal()});
+else if(t.id==='avBtn'||t.closest('#avBtn'))avatarMenu()});
 document.addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&e.target.dataset&&e.target.dataset.pin){e.preventDefault();e.target.dispatchEvent(new MouseEvent('click',{bubbles:true}))}});
+document.addEventListener('click',e=>{if(e.target.closest('#mbody [data-a="logout"]'))$('#modal').classList.remove('show')});
+function addCustom(){const ti=($('#cmT')||{value:''}).value.trim().slice(0,40),ic=CMICONS.includes(($('#cmI')||{}).value)?$('#cmI').value:'♻️';
+if(!ti){toast('Give your mission a name');return}
+S.cm=[...(S.cm||[]),{id:'c_'+Date.now().toString(36),k:null,i:ic,t:ti,how:'',n:1,xp:5,custom:true}];save();render();toast('Mission added!')}
+document.addEventListener('click',e=>{const t=e.target.closest('[data-a="addcm"],[data-a="delcm"]');if(!t)return;
+if(t.dataset.a==='addcm')addCustom();else{S.cm=(S.cm||[]).filter(m=>m.id!==t.dataset.id);save();render()}});
+document.addEventListener('keydown',e=>{if(e.key==='Enter'&&e.target.id==='cmT')addCustom()});
 let AI=null,DB=null,ME=null,LIVE=[];
 async function initBackend(){
 try{const u=await claude.use('user');if(u){const m=await u.me();ME={id:m.id,name:m.name||'Player'}}}catch(e){}
@@ -261,6 +275,10 @@ let NU=null,NT=[];
 function notifyLevel(l){S.nt=[{name:'You',level:l,t:Date.now()},...(S.nt||[])].slice(0,20);save();try{if(ACCT&&DB&&ME&&ME.id&&S.team)DB.collection('teams/'+S.team.code+'/notifs').doc().set({pid:PID(),name:ME.name,level:l,t:Date.now()}).catch(()=>{})}catch(e){}}
 function notifCard(){const useT=ACCT&&DB&&ME&&ME.id&&S.team,list=(useT?NT:(S.nt||[])).slice(0,8),ago=t=>{const m=Math.round((Date.now()-t)/6e4);return m<1?'just now':m<60?m+' min ago':m<1440?Math.round(m/60)+' h ago':Math.round(m/1440)+' d ago'};
 return `<div class="card"><h3>🔔 Notifications</h3>${list.length?list.map(n=>{const me=n.name==='You'||n.pid===PID();return `<div class="row"><span>🎉 ${me?'You':esc(n.name||'A friend')} reached <b>Level ${n.level}</b>${LV[n.level-1]?`<br><small class="note">${LV[n.level-1].n}</small>`:''}</span><small class="note">${ago(n.t)}</small></div>`}).join(''):'<p class="note">No notifications yet. You’ll see one here when you or a friend reaches a new level.</p>'}</div>`}
+const ntNew=()=>{const useT=ACCT&&DB&&ME&&ME.id&&S.team,l=useT?NT:(S.nt||[]);return l.some(n=>n.t>(S.nts||0)&&!(n.name==='You'||(ME&&ME.id&&n.pid===PID())))};
+const ntDot=()=>{const b=$('#ntBtn');if(b)b.classList.toggle('new',!!ntNew())};
+setInterval(ntDot,3000);
+document.addEventListener('click',e=>{if(!e.target.closest('[data-a="notifs"]'))return;S.nts=Date.now();save();ntDot();modal(`${notifCard()}<p><button class="lime" data-a="close" style="width:100%">Close</button></p>`)});
 let LBT='ind',TS=[];
 const avOf=r=>({skin:0,hair:0,shirt:0,acc:'none',...(r.av||{})});
 const indRows=()=>LIVE.map(r=>({id:r.id,name:r.name||'Player',v:r.xp||0,av:r.av})).sort((a,b)=>b.v-a.v);
