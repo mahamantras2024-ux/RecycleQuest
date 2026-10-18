@@ -90,7 +90,8 @@
 
   function client() {
     if (sb) return sb;
-    if (!cfg.url || !cfg.anonKey || !window.supabase) return null;
+    if (!cfg.url || !cfg.anonKey) { window.RQ_STATUS = 'config.js has no Supabase URL/key (not saved, not redeployed, or old cached copy)'; return null; }
+    if (!window.supabase) { window.RQ_STATUS = 'Supabase library did not load (offline or blocked)'; return null; }
     sb = window.supabase.createClient(cfg.url, cfg.anonKey, { auth: { persistSession: true, autoRefreshToken: true } });
     return sb;
   }
@@ -119,7 +120,7 @@
         }
         if (n === 'user' || n === 'db') {
           var c = client(); if (!c) return null;
-          var u; try { u = await getUser(c); } catch (e) { return null; }
+          var u; try { u = await getUser(c); } catch (e) { window.RQ_STATUS = 'sign-in failed: ' + (e && e.message ? e.message : e); return null; }
           if (n === 'user') return { me: async function () { return { id: u.id, name: 'Player' }; } };
           return makeDB(c);
         }
