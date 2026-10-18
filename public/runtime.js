@@ -3,6 +3,7 @@
    (anonymous sign-in + one "docs" table) and the browser. */
 (function () {
   'use strict';
+  if (typeof window !== 'undefined') window.RQ_RUNTIME = 4;
 
   function makeDB(sb) {
     var uuid = function () { return (crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) + Math.random().toString(16).slice(2)); };
