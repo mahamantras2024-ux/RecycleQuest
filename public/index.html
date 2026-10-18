@@ -84,7 +84,7 @@ header{flex-wrap:wrap}h1{white-space:nowrap}@media (max-width:420px){h1{font-siz
 <div id="toast" role="status"></div>
 <div id="gate"></div>
 <script>
-const LV=[{n:'Concrete Jungle',x:0,d:'Grey blocks and an empty courtyard.'},{n:'Greener Block',x:100,d:'Trees, flowers and recycling stations.'},{n:'Eco Community',x:250,d:'A community garden and benches.'},{n:'Thriving Neighbourhood',x:450,d:'A vibrant park, pond and community plaza.'}];
+const LV=[{n:'🏙️ Concrete Jungle',x:0,d:'Grey blocks and an empty courtyard.'},{n:'🌱 Greener Block',x:100,d:'Trees, flowers and recycling stations.'},{n:'🌳 Eco Community',x:250,d:'A community garden and benches.'},{n:'🏞️ Thriving Neighbourhood',x:450,d:'A vibrant park, pond and community plaza.'}];
 const lvOf=x=>LV.reduce((l,v,i)=>x>=v.x?i+1:l,1);
 const MV=[
 {k:'bottle',v:[{id:'bottle_a',i:'🧴',t:'Recycle 2 plastic bottles',how:'Empty each one, rinse it and shake it dry before it goes in the blue bin.',n:2,xp:10},{id:'bottle_b',i:'💧',t:'Recycle 3 drink bottles',how:'',n:3,xp:8}]},
@@ -185,12 +185,13 @@ const semG=()=>Object.entries(S.items).reduce((a,[k,n])=>a+(SEMW[k]||0)*n,0);
 const fmtW=g=>g<1000?Math.round(g)+' g':(g/1000).toFixed(g<10000?2:1)+' kg';
 function semCard(){
 const g=semG(),ms=[500,1000,2500,5000,10000,25000,50000],nxm=ms.find(m=>m>g)||0,prev=ms.filter(m=>m<=g).pop()||0,mp=nxm?Math.round((g-prev)/(nxm-prev)*100):100,days=(g/360).toFixed(1);
-const nm={bottle:'🧴 Bottles',cardboard:'📦 Cardboard',can:'🥫 Cans',takeaway:'🥡 Takeaway',carton:'🥛 Cartons'};
+const nm={bottle:['🧴','Bottles'],cardboard:['📦','Cardboard'],can:['🥫','Cans'],takeaway:['🥡','Takeaway'],carton:['🥛','Cartons']};
 return `<div class="card"><h3>🏝️ Pulau Semakau landfill saved</h3>
-<p class="note">Semakau is Singapore’s only landfill and is projected to fill up around 2035. Every item you recycle correctly keeps a little more waste out of the disposal stream that ends there.</p>
-<div class="chips"><div class="chip"><b>${fmtW(g)}</b><span>Waste kept out of the bin</span></div><div class="chip"><b>${days}</b><span>Days of an average person’s landfill waste</span></div></div>
-<p class="note" style="margin-top:10px">${nxm?`Next milestone: <b>${fmtW(nxm)}</b> (${fmtW(nxm-g)} to go)`:'Top milestone reached. Amazing!'}</p><div class="bar"><i style="width:${mp}%"></i></div>
-<div style="margin-top:10px">${Object.keys(nm).map(k=>`<div class="row"><span>${nm[k]} <small class="note">· ${S.items[k]||0} × ~${SEMW[k]} g</small></span><b>${fmtW((S.items[k]||0)*SEMW[k])}</b></div>`).join('')}</div></div>`}
+<p class="note" style="margin:0 0 10px">Semakau is Singapore’s only landfill, projected to be full by about 2035. Recycling right helps it last longer.</p>
+<div class="chips"><div class="chip"><b>⚖️ ${fmtW(g)}</b><span>Kept out of landfill</span></div><div class="chip"><b>📅 ${days}</b><span>Days of one person’s waste</span></div></div>
+<div class="bar" style="margin-top:12px"><i style="width:${mp}%"></i></div>
+<p class="note" style="margin:6px 0 10px">🎯 ${nxm?`Next milestone: <b>${fmtW(nxm)}</b> · ${fmtW(nxm-g)} to go`:'Top milestone reached!'}</p>
+${Object.keys(nm).map(k=>{const n=S.items[k]||0,w=n*SEMW[k],pc=g?Math.round(w/g*100):0;return `<div style="display:flex;align-items:center;gap:10px;padding:7px 0;border-top:1px solid var(--line)"><span style="flex:none;width:38px;height:38px;border-radius:12px;background:var(--pur2);display:flex;align-items:center;justify-content:center;font-size:21px">${nm[k][0]}</span><div style="flex:1;min-width:0"><div style="display:flex;justify-content:space-between"><b>${nm[k][1]}</b><b>${fmtW(w)}</b></div><div class="bar" style="height:6px;margin:4px 0 2px"><i style="width:${pc}%"></i></div><small class="note">${n} × ~${SEMW[k]} g</small></div></div>`}).join('')}</div>`}
 const done=()=>DAILY().filter(m=>(S.mp[m.id]||0)>=m.n).length;
 const V={
 home(){const l=lvOf(S.xp);
@@ -209,8 +210,8 @@ map(){return BINS?mapReal():mapLoad()},
 impact(){const t=tot(),l=lvOf(S.xp),nx=LV[l],pc=nx?Math.round((S.xp-LV[l-1].x)/(nx.x-LV[l-1].x)*100):100,mx=Math.max(1,...Object.values(S.items));
 const nm={bottle:'🧴 Bottles',cardboard:'📦 Cardboard',can:'🥫 Cans',takeaway:'🥡 Takeaway',carton:'🥛 Cartons'};
 return `<h2>Your impact</h2><div class="chips"><div class="chip"><b>${t}</b><span>Recycling actions</span></div><div class="chip"><b>${done()}</b><span>Missions today</span></div><div class="chip"><b>${S.days+1}</b><span>Days played</span></div></div>
-<div class="card"><h3>Community progress</h3><p>Your neighbourhood is at <b>Level ${l}: ${LV[l-1].n}</b>.</p><div class="bar"><i style="width:${pc}%"></i></div>
-<p class="note">${LV.map((v,i)=>`${l>i?'✅':'⬜'} ${v.n} (${v.x} XP)`).join('<br>')}</p></div>
+<div class="card"><h3>Community progress</h3><p style="margin:0 0 6px"><b>Level ${l}: ${LV[l-1].n}</b></p><div class="bar"><i style="width:${pc}%"></i></div>
+<p class="note" style="margin:6px 0 0">${nx?`${nx.x-S.xp} XP to ${nx.n}`:'Max level reached!'}</p></div>
 ${semCard()}
 `},
 squad(){return teamCard()+leaderboard()}
