@@ -358,7 +358,7 @@ create:false?sw('login',`An account (<b>${nm}</b>) already exists here. Log in t
 setpw:`<p>Hi <b>${nm}</b>! Add a password to secure your account.</p>${fld('pw','Password (at least 8 characters)','password')}${fld('pw2','Confirm password','password')}${showBox}${keepBox}<button class="lime" data-a="setpw" style="width:100%">Save password</button>`,
 guest:'<p class="note">Accounts need you to be signed in to claude.ai with contributor access to this page. You can still play as a guest.</p>'}[GATE]||'';
 const tabs=GATE==='login'||GATE==='create'?`<div class="gtabs"><button data-gt="login" aria-pressed="${GATE==='login'}">Log in</button><button data-gt="create" aria-pressed="${GATE==='create'}">Create account</button></div>`:'';
-g.innerHTML=`<div class="gatebox"><div style="font-size:54px">♻️</div><h1 style="margin:4px 0 4px">RecycleQuest</h1><p class="note" style="margin:0 0 14px">Log in or create an account to save your progress and team up with friends.</p>${tabs}${b}${GATE==='guest'?'<button class="ghost" data-a="guest" style="width:100%;margin-top:10px">Continue as guest</button>':''}</div>`}
+g.innerHTML=`<div class="gatebox"><div style="font-size:54px">♻️</div><h1 style="margin:4px 0 4px">RecycleQuest</h1>${tabs}${b}${GATE==='guest'?'<button class="ghost" data-a="guest" style="width:100%;margin-top:10px">Continue as guest</button>':''}</div>`}
 document.addEventListener('click',e=>{const t=e.target.closest('[data-gt]');if(t){GATE=t.dataset.gt;gate()}});
 let uTimer=0;
 document.addEventListener('input',e=>{if(e.target.id!=='uName'||LOCAL||!(window.RQ_AUTH&&RQ_AUTH.enabled()))return;const h=$('#uHint'),n=e.target.value.trim();clearTimeout(uTimer);if(!h)return;
